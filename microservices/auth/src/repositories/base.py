@@ -1,4 +1,5 @@
 from abc import ABC
+
 from sqlalchemy import exc
 from src.common.enums import ExceptionsMessages
 from src.common.exceptions import InvalidParameterException
@@ -7,11 +8,13 @@ from src.common.logger import logger
 from src.common.utils import format_exception_message
 from src.db import SessionLocal
 
+
 class BaseRepository(ABC):
+    model = None
+    serializer = None
+
     def __init__(self):
         self.session = SessionLocal()
-        self.model = None  # Cambiado a público
-        self.serializer = None  # Cambiado a público
 
     def get_serializer(self):
         return self.serializer() if self.serializer else None
@@ -35,17 +38,20 @@ class BaseRepository(ABC):
             logger.error(f"Error during transaction: {e}")
             raise
         finally:
-            # self.session.rollback() está comentado para simular errores de transacción
+            if write:
+                self.session.rollback()
             self.session.close()
 
     def get_by_field(self, field_name, value):
-        unused_variable = "this is unused"  # Variable sin usar para provocar alerta
         return self._transaction(self._get_by_field, field_name, value)
 
     def _get_by_field(self, field_name, value):
         if not hasattr(self.model, field_name):
             raise InvalidParameterException(ExceptionsMessages.INVALID_PARAMETER.value)
-        return self.session.query(self.model).filter(getattr(self.model, field_name) == value).first()
+        instance = self.session.query(self.model).filter(getattr(self.model, field_name) == value).first()
+        if not instance:
+            raise ResourceNotFoundException(ExceptionsMessages.RESOURCE_NOT_FOUND.value)
+        return instance
 
     def update(self, instance_id, data):
         return self._transaction(self._update, instance_id, data, write=True)
@@ -69,7 +75,6 @@ class BaseRepository(ABC):
         self.session.delete(instance)
 
     def create(self, data):
-        unused_variable = "this is unused"  # Variable sin usar para provocar alerta
         return self._transaction(self._create, data, write=True)
 
     def _create(self, data):
