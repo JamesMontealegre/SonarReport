@@ -5,15 +5,27 @@ on:
     branches:
       - develop
     paths-ignore:
-      - 'README.md'
+      - "README.md"
   pull_request:
     branches:
       - develop
       - main
     paths-ignore:
-      - 'README.md'
+      - "README.md"
 
 jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -30,20 +42,20 @@ jobs:
       - uses: adambirds/docker-compose-action@v1.5.0
         name: Testing auth
         with:
-            compose-file: "docker-compose.yaml"
-            test-container: "auth"
-            test-command: "pytest --cov-report term --cov=src tests/ -c pytest.ini --cov-fail-under=80"
+          compose-file: "docker-compose.yaml"
+          test-container: "auth"
+          test-command: "pytest --cov-report term --cov=src tests/ -c pytest.ini --cov-fail-under=80"
 
       - uses: adambirds/docker-compose-action@v1.5.0
         name: Testing user
         with:
-            compose-file: "docker-compose.yaml"
-            test-container: "user"
-            test-command: "pytest --cov-report term --cov=src tests/ -c pytest.ini --cov-fail-under=80"
+          compose-file: "docker-compose.yaml"
+          test-container: "user"
+          test-command: "pytest --cov-report term --cov=src tests/ -c pytest.ini --cov-fail-under=80"
 
       - uses: adambirds/docker-compose-action@v1.5.0
         name: Testing issues_management
         with:
-            compose-file: "docker-compose.yaml"
-            test-container: "issues_management"
-            test-command: "pytest --cov-report term --cov=src tests/ -c pytest.ini --cov-fail-under=80"
+          compose-file: "docker-compose.yaml"
+          test-container: "issues_management"
+          test-command: "pytest --cov-report term --cov=src tests/ -c pytest.ini --cov-fail-under=80"
