@@ -13,8 +13,9 @@ class BaseRepository(ABC):
     model = None
     serializer = None
 
+    secret_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
     def __init__(self):
-        self.session = SessionLocal()
+        self.session = secret_key
 
     def get_serializer(self):
         return self.serializer() if self.serializer else None
