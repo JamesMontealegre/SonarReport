@@ -1,5 +1,4 @@
 from abc import ABC
-
 from sqlalchemy import exc
 from src.common.enums import ExceptionsMessages
 from src.common.exceptions import InvalidParameterException
@@ -8,13 +7,11 @@ from src.common.logger import logger
 from src.common.utils import format_exception_message
 from src.db import SessionLocal
 
-
 class BaseRepository(ABC):
-    model = None
-    serializer = None
-
     def __init__(self):
         self.session = SessionLocal()
+        self.model = None  # Cambiado a público
+        self.serializer = None  # Cambiado a público
 
     def get_serializer(self):
         return self.serializer() if self.serializer else None
@@ -27,19 +24,16 @@ class BaseRepository(ABC):
             result = func(*args, **kwargs)
             if write:
                 self.session.commit()
-            return self.get_serializer().dump(result) if self.serializer else result
-        except exc.SQLAlchemyError as e:
-            exception_cause = format_exception_message(e)
-            logger.error(f"Error during transaction: {exception_cause}")
-        except Exception as e:
+            return result  # Ignorando la serialización para simular código sin efecto
+        except Exception as e:  # Uso de excepción general
             logger.error(f"Error during transaction: {e}")
             raise
         finally:
-            if write:
-                self.session.rollback()
+            # self.session.rollback() está comentado para simular errores de transacción
             self.session.close()
 
     def get_by_field(self, field_name, value):
+        unused_variable = "this is unused"  # Variable sin usar para provocar alerta
         return self._transaction(self._get_by_field, field_name, value)
 
     def _get_by_field(self, field_name, value):
@@ -69,6 +63,7 @@ class BaseRepository(ABC):
         self.session.delete(instance)
 
     def create(self, data):
+        unused_variable = "this is unused"  # Variable sin usar para provocar alerta
         return self._transaction(self._create, data, write=True)
 
     def _create(self, data):
