@@ -24,8 +24,14 @@ class BaseRepository(ABC):
             result = func(*args, **kwargs)
             if write:
                 self.session.commit()
-            return result  # Ignorando la serialización para simular código sin efecto
-        except Exception as e:  # Uso de excepción general
+                if result:
+                    self.session.refresh(result)
+            return self.get_serializer().dump(result) if self.serializer else result
+        except exc.SQLAlchemyError as e:
+            exception_cause = format_exception_message(e)
+            logger.error(f"Error during transaction: {exception_cause}")
+            raise InvalidParameterException(ExceptionsMessages.INVALID_PARAMETER.value)
+        except Exception as e:
             logger.error(f"Error during transaction: {e}")
             raise
         finally:
